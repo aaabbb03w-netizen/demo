@@ -6,27 +6,42 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
 
-const devices = {}; // deviceId -> socketId
-
 app.use(express.json());
 
-app.post("/register", (req, res) => {
-  res.send({ status: "ok" });
+const devices = {}; // deviceId → socketId
+
+io.on("connection", socket => {
+
+  socket.on("register", deviceId => {
+    devices[deviceId] = socket.id;
+    console.log("Device connected:", deviceId);
+  });
+
+  socket.on("disconnect", () => {
+    for (let d in devices) {
+      if (devices[d] === socket.id) delete devices[d];
+    }
+  });
 });
 
+// Trigger screen share request
 app.post("/scshare", (req, res) => {
   const { deviceId } = req.body;
-  const socketId = devices[deviceId];
-  if (socketId) {
-    io.to(socketId).emit("share_request");
+  if (devices[deviceId]) {
+    io.to(devices[deviceId]).emit("share_request");
+  }
+  res.send({ ok: true });
+});
+
+// Send TAP command
+app.post("/tap", (req, res) => {
+  const { deviceId, x, y } = req.body;
+  if (devices[deviceId]) {
+    io.to(devices[deviceId]).emit("tap", { x, y });
   }
   res.send({ sent: true });
 });
 
-io.on("connection", (socket) => {
-  socket.on("register", (deviceId) => {
-    devices[deviceId] = socket.id;
-  });
+server.listen(3000, () => {
+  console.log("Remote server running on 3000");
 });
-
-server.listen(3000, () => console.log("Server running"));
