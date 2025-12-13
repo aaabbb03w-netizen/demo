@@ -14,17 +14,21 @@ io.on("connection", socket => {
 
   socket.on("register", deviceId => {
     devices[deviceId] = socket.id;
-    console.log("Device connected:", deviceId);
   });
 
-  socket.on("disconnect", () => {
-    for (let d in devices) {
-      if (devices[d] === socket.id) delete devices[d];
+  socket.on("signal", data => {
+    if (devices[data.deviceId]) {
+      io.to(devices[data.deviceId]).emit("signal", data);
+    }
+  });
+
+  socket.on("tap", data => {
+    if (devices[data.deviceId]) {
+      io.to(devices[data.deviceId]).emit("tap", data);
     }
   });
 });
 
-// Trigger screen share request
 app.post("/scshare", (req, res) => {
   const { deviceId } = req.body;
   if (devices[deviceId]) {
@@ -33,15 +37,4 @@ app.post("/scshare", (req, res) => {
   res.send({ ok: true });
 });
 
-// Send TAP command
-app.post("/tap", (req, res) => {
-  const { deviceId, x, y } = req.body;
-  if (devices[deviceId]) {
-    io.to(devices[deviceId]).emit("tap", { x, y });
-  }
-  res.send({ sent: true });
-});
-
-server.listen(3000, () => {
-  console.log("Remote server running on 3000");
-});
+server.listen(3000, () => console.log("Server on 3000"));
