@@ -1,31 +1,38 @@
-const express = require('express');
-const http = require('http');
-const WebSocket = require('ws');
-
+const express = require("express");
+const http = require("http");
+const WebSocket = require("ws");
+const path = require("path");
 
 const app = express();
 app.use(express.json());
 
+// 🔥 IMPORTANT: public folder serve karo
+app.use(express.static(path.join(__dirname, "public")));
 
-let sockets = [];
-
-
-app.post('/startscreen', (req,res)=>{
-// deviceId receive → FCM/Broadcast (demo)
-res.json({ok:true});
+// Test API
+app.post("/startscreen", (req, res) => {
+  const { deviceId } = req.body;
+  console.log("Start screen request for:", deviceId);
+  res.json({ ok: true });
 });
-
 
 const server = http.createServer(app);
+
 const wss = new WebSocket.Server({ server });
+wss.on("connection", ws => {
+  console.log("WS connected");
 
-
-wss.on('connection', ws => {
-sockets.push(ws);
-ws.on('message', data => {
-sockets.forEach(s => s !== ws && s.send(data));
+  ws.on("message", data => {
+    // broadcast to all
+    wss.clients.forEach(client => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(data);
+      }
+    });
+  });
 });
+
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log("Server running on port", PORT);
 });
-
-
-server.listen(3000, ()=>console.log('Server running'));
