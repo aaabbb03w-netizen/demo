@@ -1,4 +1,3 @@
-// server.js
 const express = require("express");
 const http = require("http");
 const WebSocket = require("ws");
@@ -7,10 +6,10 @@ const path = require("path");
 const app = express();
 app.use(express.json());
 
-// 🔥 Serve public folder for frontend files (optional)
+// 🔥 Serve frontend files if any (optional)
 app.use(express.static(path.join(__dirname, "public")));
 
-// In-memory store for devices
+// In-memory device store
 const devices = {}; // deviceId -> { deviceId, model, registeredAt }
 
 // ✅ Register device
@@ -31,18 +30,13 @@ app.post("/register", (req, res) => {
 // ✅ Start screen request
 app.post("/startscreen", (req, res) => {
   const { deviceId } = req.body;
-  if (!deviceId || !devices[deviceId]) {
-    return res.status(404).json({ error: "Device not found" });
-  }
+  if (!deviceId || !devices[deviceId]) return res.status(404).json({ error: "Device not found" });
 
   console.log("Start screen request for:", deviceId);
 
-  // Broadcast via WebSocket to all connected clients
   const payload = JSON.stringify({ type: "startscreen", deviceId });
   wss.clients.forEach(client => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(payload);
-    }
+    if (client.readyState === WebSocket.OPEN) client.send(payload);
   });
 
   res.json({ ok: true });
@@ -50,8 +44,7 @@ app.post("/startscreen", (req, res) => {
 
 // ✅ Fetch all registered devices
 app.get("/devices", (req, res) => {
-  const list = Object.values(devices); // convert object to array
-  res.json({ ok: true, devices: list });
+  res.json({ ok: true, devices: Object.values(devices) });
 });
 
 // ✅ HTTP + WebSocket server
@@ -64,17 +57,12 @@ wss.on("connection", ws => {
   ws.on("message", message => {
     // Broadcast received message to all clients
     wss.clients.forEach(client => {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(message);
-      }
+      if (client.readyState === WebSocket.OPEN) client.send(message);
     });
   });
 
   ws.on("close", () => console.log("WS client disconnected"));
 });
 
-// ✅ Start server
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log("Server running on port", PORT);
-});
+server.listen(PORT, () => console.log("Server running on port", PORT));
