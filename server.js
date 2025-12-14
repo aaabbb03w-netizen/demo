@@ -7,7 +7,7 @@ const path = require("path");
 const app = express();
 app.use(express.json());
 
-// 🔥 Serve public folder for any frontend files
+// 🔥 Serve public folder for frontend files (optional)
 app.use(express.static(path.join(__dirname, "public")));
 
 // In-memory store for devices
@@ -46,6 +46,12 @@ app.post("/startscreen", (req, res) => {
   });
 
   res.json({ ok: true });
+});
+
+// ✅ Fetch all registered devices
+app.get("/devices", (req, res) => {
+  const list = Object.values(devices); // convert object to array
+  res.json({ ok: true, devices: list });
 });
 
 // ✅ HTTP + WebSocket server
