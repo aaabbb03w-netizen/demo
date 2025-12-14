@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<body>
+<h2>Live Screen</h2>
+<img id="img" />
+<script>
+const ws = new WebSocket('ws://' + location.host);
+ws.binaryType = 'arraybuffer';
+ws.onmessage = e => {
+const blob = new Blob([e.data], {type:'image/jpeg'});
+document.getElementById('img').src = URL.createObjectURL(blob);
+};
+</script>
+</body>
+</html>
