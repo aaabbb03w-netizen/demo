@@ -5,11 +5,9 @@ const path = require("path");
 
 const app = express();
 app.use(express.json());
-
-// 🔥 Serve frontend files if any (optional)
 app.use(express.static(path.join(__dirname, "public")));
 
-// In-memory device store
+// In-memory store
 const devices = {}; // deviceId -> { deviceId, model, registeredAt }
 
 // ✅ Register device
@@ -22,19 +20,17 @@ app.post("/register", (req, res) => {
     model,
     registeredAt: new Date().toISOString()
   };
-
   console.log("Device registered:", devices[deviceId]);
   res.json({ ok: true, device: devices[deviceId] });
 });
 
-// ✅ Start screen request
-app.post("/startscreen", (req, res) => {
-  const { deviceId } = req.body;
-  if (!deviceId || !devices[deviceId]) return res.status(404).json({ error: "Device not found" });
+// ✅ Start screen request (Android device sends frames as base64)
+app.post("/screenshare", (req, res) => {
+  const { deviceId, frame } = req.body;
+  if (!deviceId || !frame) return res.status(400).json({ error: "Missing deviceId or frame" });
 
-  console.log("Start screen request for:", deviceId);
-
-  const payload = JSON.stringify({ type: "startscreen", deviceId });
+  // Broadcast frame to all connected clients
+  const payload = JSON.stringify({ type: "frame", deviceId, frame });
   wss.clients.forEach(client => {
     if (client.readyState === WebSocket.OPEN) client.send(payload);
   });
@@ -42,25 +38,17 @@ app.post("/startscreen", (req, res) => {
   res.json({ ok: true });
 });
 
-// ✅ Fetch all registered devices
+// ✅ Fetch all devices
 app.get("/devices", (req, res) => {
   res.json({ ok: true, devices: Object.values(devices) });
 });
 
-// ✅ HTTP + WebSocket server
+// HTTP + WebSocket server
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
 wss.on("connection", ws => {
   console.log("WS client connected");
-
-  ws.on("message", message => {
-    // Broadcast received message to all clients
-    wss.clients.forEach(client => {
-      if (client.readyState === WebSocket.OPEN) client.send(message);
-    });
-  });
-
   ws.on("close", () => console.log("WS client disconnected"));
 });
 
