@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html>
+<head>
+  <title>ScreenShare Dashboard</title>
+</head>
 <body>
-<h2>Live Screen</h2>
-<img id="img" />
-<script>
-const ws = new WebSocket('ws://' + location.host);
-ws.binaryType = 'arraybuffer';
-ws.onmessage = e => {
-const blob = new Blob([e.data], {type:'image/jpeg'});
-document.getElementById('img').src = URL.createObjectURL(blob);
-};
-</script>
+  <h1>Connected Devices</h1>
+  <div id="devices"></div>
+
+  <h2>Live Screen</h2>
+  <img id="screen" width="360" />
+
+  <script src="client.js"></script>
 </body>
 </html>
