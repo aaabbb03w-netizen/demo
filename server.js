@@ -6,29 +6,19 @@ const cors = require("cors");
 app.use(cors());
 app.use(express.json());
 
-let devices = {
-    "YOUR_DEVICE_ID": false // default inactive
-};
+// Single device active flag
+let active = false;
 
-app.get("/device", (req, res) => {
-    const deviceId = req.query.deviceId;
-    if (devices[deviceId] !== undefined) {
-        res.send(devices[deviceId].toString());
-    } else {
-        res.status(404).send("Device not found");
-    }
+// GET current state
+app.get("/", (req, res) => {
+    res.send(active.toString());
 });
 
-app.post("/device", (req, res) => {
-    const { deviceId, active } = req.body;
-    if (devices[deviceId] !== undefined) {
-        devices[deviceId] = active;
-        res.send("OK");
-    } else {
-        res.status(404).send("Device not found");
-    }
+// POST toggle state
+app.post("/", (req, res) => {
+    const { active: newState } = req.body;
+    active = newState;
+    res.send("OK");
 });
 
-app.listen(3000, () => {
-    console.log("Server running on port 3000");
-});
+app.listen(3000, () => console.log("Server running on port 3000"));
