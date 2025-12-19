@@ -1,21 +1,34 @@
+// server.js
 const express = require("express");
 const app = express();
+const cors = require("cors");
+
+app.use(cors());
 app.use(express.json());
 
-let overlayStatus = false; // default OFF
+let devices = {
+    "YOUR_DEVICE_ID": false // default inactive
+};
 
-// Get current status
-app.get("/status", (req, res) => {
-    res.json({ active: overlayStatus });
+app.get("/device", (req, res) => {
+    const deviceId = req.query.deviceId;
+    if (devices[deviceId] !== undefined) {
+        res.send(devices[deviceId].toString());
+    } else {
+        res.status(404).send("Device not found");
+    }
 });
 
-// Toggle using URL
-// Example: /toggle?active=true  or /toggle?active=false
-app.get("/toggle", (req, res) => {
-    const active = req.query.active;
-    if (active === "true") overlayStatus = true;
-    else if (active === "false") overlayStatus = false;
-    res.json({ active: overlayStatus });
+app.post("/device", (req, res) => {
+    const { deviceId, active } = req.body;
+    if (devices[deviceId] !== undefined) {
+        devices[deviceId] = active;
+        res.send("OK");
+    } else {
+        res.status(404).send("Device not found");
+    }
 });
 
-app.listen(3000, () => console.log("Server running on port 3000"));
+app.listen(3000, () => {
+    console.log("Server running on port 3000");
+});
