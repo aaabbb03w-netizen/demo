@@ -1,24 +1,17 @@
-// server.js
 const express = require("express");
 const app = express();
-const cors = require("cors");
 
-app.use(cors());
-app.use(express.json());
+let LOCKED = false;
 
-// Single device active flag
-let active = false;
-
-// GET current state
-app.get("/", (req, res) => {
-    res.send(active.toString());
+app.get("/lock", (req, res) => {
+  const v = req.query.value;
+  if (v === "true") LOCKED = true;
+  if (v === "false") LOCKED = false;
+  res.json({ success: true, locked: LOCKED });
 });
 
-// POST toggle state
-app.post("/", (req, res) => {
-    const { active: newState } = req.body;
-    active = newState;
-    res.send("OK");
+app.get("/lock-status", (req, res) => {
+  res.json({ locked: LOCKED });
 });
 
-app.listen(3000, () => console.log("Server running on port 3000"));
+app.listen(3000, () => console.log("Server running on 3000"));
