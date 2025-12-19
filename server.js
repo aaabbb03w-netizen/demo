@@ -1,13 +1,23 @@
 // server.js
 const express = require("express");
+const cors = require("cors");
 const app = express();
+const PORT = process.env.PORT || 3000;
 
-let active = true;
+app.use(cors());
+app.use(express.json());
 
-app.get("/device", (req, res) => {
-    if (req.query.active === "true") active = true;
-    if (req.query.active === "false") active = false;
-    res.json({ active });
+let overlayActive = true;
+
+// GET current overlay status
+app.get("/status", (req, res) => {
+    res.json({ active: overlayActive });
 });
 
-app.listen(3000, () => console.log("Server running on port 3000"));
+// POST toggle overlay
+app.post("/toggle", (req, res) => {
+    overlayActive = !!req.body.active;
+    res.json({ active: overlayActive });
+});
+
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
